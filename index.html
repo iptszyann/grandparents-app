@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>親情記憶館</title>
+    <style>
+        :root {
+            --bg-color: #FFF9E3;
+            --btn-game1: #FFB6C1;
+            --btn-game2: #98FB98;
+            --btn-game3: #87CEFA;
+            --text-dark: #4A2C2C;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 500px;
+            height: 95vh;
+            background: white;
+            border: 8px solid #FFD700;
+            border-radius: 30px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .screen { display: none; flex-direction: column; padding: 20px; height: 100%; box-sizing: border-box; text-align: center; }
+        .active { display: flex; }
+
+        h1 { color: var(--text-dark); font-size: 32px; margin: 10px 0; }
+        .status-text { font-size: 22px; color: #E67E22; font-weight: bold; margin-bottom: 10px; min-height: 30px; }
+
+        .menu-btn { padding: 25px; margin: 10px 0; border: none; border-radius: 20px; font-size: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 6px #ccc; }
+        .btn-1 { background-color: var(--btn-game1); }
+        .btn-2 { background-color: var(--btn-game2); }
+        .btn-3 { background-color: var(--btn-game3); }
+
+        .back-btn { padding: 15px; background: #FFD700; border: none; border-radius: 15px; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: auto; color: #4A2C2C; box-shadow: 0 4px #DAA520; }
+
+        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-grow: 1; }
+        .card { aspect-ratio: 1; background-color: #FFD700; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 30px; border: 3px solid white; box-shadow: 0 4px #DAA520; overflow: hidden; }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .card.matched { visibility: hidden; }
+
+        .match-container { display: flex; justify-content: space-between; flex-grow: 1; padding: 10px 0; }
+        .match-column { display: flex; flex-direction: column; gap: 15px; width: 45%; }
+        .match-item { aspect-ratio: 1; border: 5px solid #eee; border-radius: 15px; overflow: hidden; cursor: pointer; }
+        .match-item img { width: 100%; height: 100%; object-fit: cover; }
+        .match-item.selected { border-color: #FFD700; transform: scale(1.05); }
+        .match-item.correct { border-color: #98FB98; opacity: 0.5; pointer-events: none; }
+
+        #album-img, #album-video { max-width: 90%; max-height: 300px; border: 8px solid white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    
+    <div id="menu-screen" class="screen active">
+        <h1>❤️ 親情記憶館 ❤️</h1>
+        <button class="menu-btn btn-1" onclick="showScreen('game1-screen'); initGame1();">🎴 記憶翻翻看</button>
+        <button class="menu-btn btn-2" onclick="showScreen('game2-screen'); initGame2();">🔗 誰長大了？</button>
+        <button class="menu-btn btn-3" onclick="showScreen('game3-screen'); initGame3();">📸 看看孩子們</button>
+        
+        <div style="margin-top: 50px; padding-top: 40px;">
+            <p style="font-size: 18px; color: #888; margin-bottom: 5px;">最愛公公婆婆的家人們</p>
+            <img src="family_home.jpg" style="width: 100%; height: 150px; object-fit: cover; border-radius: 15px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        </div>
+    </div>
+
+    <div id="game1-screen" class="screen">
+        <h1>🎴 記憶翻翻看</h1>
+        <div id="game1-status" class="status-text">找出兩張一樣的！</div>
+        <div class="game-grid" id="game1-board"></div>
+        <button class="back-btn" onclick="showScreen('menu-screen')">🏠 回主選單</button>
+    </div>
+
+    <div id="game2-screen" class="screen">
+        <h1>🔗 誰長大了？</h1>
+        <div id="game2-status" class="status-text">把小時候和現在連起來</div>
+        <div class="match-container">
+            <div class="match-column" id="left-col"></div>
+            <div class="match-column" id="right-col"></div>
+        </div>
+        <button class="back-btn" onclick="showScreen('menu-screen')">🏠 回主選單</button>
+    </div>
+
+    <div id="game3-screen" class="screen">
+        <h1>📸 看看孩子們</h1>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img id="album-img" src="">
+            <video id="album-video" controls playsinline></video>
+            <p id="album-text" style="font-size: 22px; font-weight: bold; margin: 15px 0; padding: 0 10px;"></p>
+            <div style="display: flex; gap: 20px;">
+                <button class="back-btn" onclick="prevPhoto()" style="width: 120px; font-size: 18px;">⬅️ 上一張</button>
+                <button class="back-btn" onclick="nextPhoto()" style="width: 120px; font-size: 18px;">下一張 ➡️</button>
+            </div>
+        </div>
+        <button class="back-btn" onclick="showScreen('menu-screen')">🏠 回主選單</button>
+    </div>
+
+</div>
+
+<script>
+    const game1Library = ['father.jpg','grandma.jpg','grandpa.PNG','me.jpg','mother.jpg','sis.jpg','Nicole.PNG','YM.PNG','YJ.PNG','Ryan.jpeg'];
+    
+    const game2Pairs = [
+        { id: 1, child: 'me_young.jpg', adult: 'me.jpg' },
+        { id: 2, child: 'sis_young.jpg', adult: 'sis.jpg' },
+        { id: 3, child: 'mother_young.jpg', adult: 'mother.jpg' },
+        { id: 4, child: 'father_young.jpg', adult: 'father.jpg' }
+    ];
+
+    const albumLibrary = [
+        { type: 'image', url: 'family5.jpg', desc: '在公公婆婆面前，我們永遠是可以撒嬌的孩子。' },
+        { type: 'image', url: 'me.jpg', desc: '在希臘的昕昕😎' },
+        { type: 'image', url: 'sis.jpg', desc: '在希臘的晴晴😛' },
+        { type: 'image', url: 'mother.jpg', desc: '媽媽的優雅，是時光也帶不走的從容。' },
+        { type: 'image', url: 'family1.jpg', desc: '幸福就是，陪您們慢慢吃飯，聽您們慢慢說話。' },
+        { type: 'image', url: 'old.jpg', desc: '您們的故事，是我聽過最動人的童話。' },
+        { type: 'image', url: 'popo2.jpg', desc: '全世界最可愛的婆婆，在我家。' },
+        { type: 'image', url: 'nicolegrandpa.jpg', desc: '祝您身體健康，天天開心' },
+        { type: 'image', url: 'sweet2.jpg', desc: '最安心的畫面，是您們健康平安的笑容。' },
+        { type: 'image', url: 'selfie.jpg', desc: '團圓，就是節日最好的禮物。' },
+        { type: 'image', url: 'family2.JPG', desc: '幸福的模樣' },
+        { type: 'image', url: 'family3.jpg', desc: '有你們在，就是最好的時光。' },
+        { type: 'image', url: 'family4.JPG', desc: '三餐四季，溫暖有趣。' },
+        { type: 'image', url: '4ppl.jpg', desc: '🎓🎉🎊❤️' },
+        { type: 'image', url: 'graduation.JPG', desc: '這不是結束，而是更精彩的開始。' }
+    ];
+
+    let albumIndex = 0;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        // 切換螢幕時停止影片
+        const video = document.getElementById('album-video');
+        video.pause();
+    }
+
+    /* --- 遊戲一 --- */
+    let g1Flipped = [];
+    let g1Matched = 0;
+    function initGame1() {
+        const board = document.getElementById('game1-board');
+        board.innerHTML = ''; g1Flipped = []; g1Matched = 0;
+        document.getElementById('game1-status').innerText = "找出兩張一樣的！";
+        let photos = [...game1Library].sort(() => Math.random() - 0.5).slice(0, 6);
+        let cards = [...photos, ...photos].sort(() => Math.random() - 0.5);
+        cards.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'card'; card.dataset.photo = p; card.innerText = '？';
+            card.onclick = () => {
+                if (g1Flipped.length < 2 && !card.classList.contains('flipped')) {
+                    card.classList.add('flipped');
+                    card.innerHTML = `<img src="${p}">`;
+                    g1Flipped.push(card);
+                    if (g1Flipped.length === 2) setTimeout(checkG1, 700);
+                }
+            };
+            board.appendChild(card);
+        });
+    }
+
+    function checkG1() {
+        if (g1Flipped[0].dataset.photo === g1Flipped[1].dataset.photo) {
+            g1Flipped.forEach(c => c.classList.add('matched'));
+            g1Matched++;
+            if (g1Matched === 6) document.getElementById('game1-status').innerText = "🎉 公公婆婆太棒了！";
+        } else {
+            g1Flipped.forEach(c => { c.classList.remove('flipped'); c.innerText = '？'; });
+        }
+        g1Flipped = [];
+    }
+
+    /* --- 遊戲二 --- */
+    let selectedLeft = null;
+    let g2Matched = 0;
+    function initGame2() {
+        const leftCol = document.getElementById('left-col');
+        const rightCol = document.getElementById('right-col');
+        leftCol.innerHTML = ''; rightCol.innerHTML = '';
+        selectedLeft = null; g2Matched = 0;
+        document.getElementById('game2-status').innerText = "把小時候和現在連起來";
+        let selected = [...game2Pairs].sort(() => Math.random() - 0.5).slice(0, 3);
+        let leftData = [...selected].sort(() => Math.random() - 0.5);
+        let rightData = [...selected].sort(() => Math.random() - 0.5);
+        leftData.forEach(item => {
+            const div = document.createElement('div'); div.className = 'match-item';
+            div.innerHTML = `<img src="${item.child}">`;
+            div.onclick = () => {
+                document.querySelectorAll('#left-col .match-item').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected'); selectedLeft = item.id;
+            };
+            leftCol.appendChild(div);
+        });
+        rightData.forEach(item => {
+            const div = document.createElement('div'); div.className = 'match-item';
+            div.innerHTML = `<img src="${item.adult}">`;
+            div.onclick = () => {
+                if (!selectedLeft) return;
+                if (selectedLeft === item.id) {
+                    div.classList.add('correct');
+                    document.querySelector('#left-col .selected').classList.add('correct');
+                    document.querySelector('#left-col .selected').classList.remove('selected');
+                    selectedLeft = null; g2Matched++;
+                    if (g2Matched === 3) document.getElementById('game2-status').innerText = "🎉 認得真準！公公婆婆好叻！";
+                } else {
+                    document.getElementById('game2-status').innerText = "係有啲似樣，再試試看！";
+                }
+            };
+            rightCol.appendChild(div);
+        });
+    }
+
+    /* --- 遊戲三 --- */
+    function initGame3() { albumIndex = 0; updateAlbum(); }
+    function updateAlbum() {
+        const item = albumLibrary[albumIndex];
+        const img = document.getElementById('album-img');
+        const video = document.getElementById('album-video');
+        video.pause();
+        if (item.type === 'video') {
+            img.style.display = 'none';
+            video.style.display = 'block';
+            video.src = item.url;
+        } else {
+            video.style.display = 'none';
+            img.style.display = 'block';
+            img.src = item.url;
+        }
+        document.getElementById('album-text').innerText = item.desc;
+    }
+    function nextPhoto() { albumIndex = (albumIndex + 1) % albumLibrary.length; updateAlbum(); }
+    function prevPhoto() { albumIndex = (albumIndex - 1 + albumLibrary.length) % albumLibrary.length; updateAlbum(); }
+</script>
+</body>
+</html>
